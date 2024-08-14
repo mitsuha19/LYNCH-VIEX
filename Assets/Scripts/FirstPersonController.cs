@@ -5,17 +5,21 @@ using UnityEngine;
 public class FirstPersonController : MonoBehaviour
 {
     public bool CanMove { get; private set; } = true;
-    private bool IsSprinting => canSprint && Input.GetKey(sprintKey) && currentStamina > 0;
-    private bool ShouldJump => Input.GetKeyDown(jumpKey) && characterController.isGrounded;
+
+    public bool IsSprinting => canSprint && Input.GetKey(sprintKey) && !isCrouching && isMovingForward && currentStamina > 0;
+
+    private bool ShouldJump => Input.GetKeyDown(jumpKey) && characterController.isGrounded && !isCrouching && !duringCrouchAnimation;
+
     private bool ShouldCrouch => Input.GetKeyDown(crouchKey) && !duringCrouchAnimation && characterController.isGrounded;
 
     [Header("Functional Options")]
-    [SerializeField] private bool canSprint = true;
     [SerializeField] private bool canJump = true;
+    [SerializeField] private bool canSprint = true;
     [SerializeField] private bool canCrouch = true;
     [SerializeField] private bool canUseHeadbob = true;
     [SerializeField] private bool useFootsteps = true;
     [SerializeField] private bool useStamina = true;
+    [SerializeField] private bool isMovingForward;
 
     [Header("Controls")]
     [SerializeField] private KeyCode sprintKey = KeyCode.LeftShift;
@@ -40,30 +44,27 @@ public class FirstPersonController : MonoBehaviour
     [Header("Crouch Parameters")]
     [SerializeField] private float crouchHeight = 0.5f;
     [SerializeField] private float standingHeight = 2f;
-    [SerializeField] private float timeToCrouch = 0.25f;
-    [SerializeField] private Vector3 crouchingCenter = new Vector3(0, 0.5f, 0);
-    [SerializeField] private Vector3 standingCenter = new Vector3(0, 0, 0);
+    [SerializeField] private float timeToCrouch = 1f;
+    [SerializeField] private Vector3 crouchingCenter = new Vector3(0, 0.5f, 0);  
+    [SerializeField] private Vector3 standingCenter = new Vector3(0, 0, 0);  
     private bool isCrouching;
     private bool duringCrouchAnimation;
 
     [Header("Headbob Parameters")]
     [SerializeField] private float walkBobSpeed = 14f;
-    [SerializeField] private float walkBobAmount = 0.05f;
+    [SerializeField] private float walkBobAmount = 0.3f;
     [SerializeField] private float sprintBobSpeed = 18f;
-    [SerializeField] private float sprintBobAmount = 0.1f;
+    [SerializeField] private float sprintBobAmount = 0.6f;
     [SerializeField] private float crouchBobSpeed = 8f;
-    [SerializeField] private float crouchBobAmount = 0.025f;
+    [SerializeField] private float crouchBobAmount = 0.15f;
     private float defaultYPos = 0;
+    private float defaultXPos = 0;
     private float timer;
 
     [Header("Footsteps Parameters")]
     [SerializeField] private float baseStepSpeed = 0.5f;
-    [SerializeField] private float crouchStepMultiplier = 1.5f;
-    [SerializeField] private float sprintStepMultiplier = 0.6f;
-    [SerializeField] private AudioSource PlayerAudioSource = default;
     [SerializeField] private AudioClip[] ceramicClips = default;
     private float footstepTimer = 0;
-    private float GetCurrentOffset => isCrouching ? baseStepSpeed * crouchStepMultiplier : IsSprinting ? baseStepSpeed * sprintStepMultiplier : baseStepSpeed;
 
     [Header("Stamina Parameters")]
     [SerializeField] private float maxStamina = 100;
@@ -72,8 +73,22 @@ public class FirstPersonController : MonoBehaviour
     [SerializeField] private float staminaValueIncrement = 2;
     [SerializeField] private float staminaTimeIncrement = 0.1f;
     [SerializeField] private float lowStaminaThreshold = 20;
-    [SerializeField] private AudioClip lowStaminaClip;
-    [SerializeField] private AudioClip exhaustedClip;
+
+    [Header("Audio Sources")]
+    [SerializeField] private AudioSource footstepAudioSource = default;
+    [SerializeField] private AudioSource crouchAndStandAudioSource = default;
+    [SerializeField] private AudioSource exhaustedAudioSource = default;
+
+    [Header("SFX")]
+    [SerializeField] private AudioClip[] lowStaminaClip;
+    [SerializeField] private AudioClip[] exhaustedClip;
+    [SerializeField] private AudioClip[] crouchClip;
+    [SerializeField] private AudioClip[] standClip;
+    [SerializeField] private AudioClip jumpClip;
+    [SerializeField] private AudioClip landClip;
+
+    private bool previouslyGrounded = true;
+
     private float currentStamina;
     private Coroutine regeneratingStamina;
     public static Action<float> OnStaminaChange;
@@ -94,6 +109,7 @@ public class FirstPersonController : MonoBehaviour
         currentStamina = maxStamina;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        previouslyGrounded = characterController.isGrounded;
     }
 
     void Update()
@@ -108,11 +124,13 @@ public class FirstPersonController : MonoBehaviour
             if (canCrouch)
                 HandleCrouch();
             if (canUseHeadbob)
-                HandleHeadBob();
+                HandleHeadBob(); 
             if (useFootsteps)
                 HandleFootsteps();
             if (useStamina)
                 HandleStamina();
+
+            HandleLandingSound();
 
             ApplyFinalMovements();
         }
@@ -120,10 +138,17 @@ public class FirstPersonController : MonoBehaviour
 
     private void HandleMovementInput()
     {
-        currentInput = new Vector2((isCrouching ? crouchSpeed : IsSprinting ? sprintSpeed : walkSpeed) * Input.GetAxis("Vertical"), (isCrouching ? crouchSpeed : IsSprinting ? sprintSpeed : walkSpeed) * Input.GetAxis("Horizontal"));
+        float verticalInput = Input.GetAxis("Vertical");
+        float horizontalInput = Input.GetAxis("Horizontal");
+
+        isMovingForward = verticalInput > 0;
+
+        currentInput = new Vector2((isCrouching ? crouchSpeed : IsSprinting && isMovingForward ? sprintSpeed : walkSpeed) * verticalInput,
+                              (isCrouching ? crouchSpeed : IsSprinting && isMovingForward ? sprintSpeed : walkSpeed) * horizontalInput);
 
         float moveDirectionY = moveDirection.y;
-        moveDirection = (transform.TransformDirection(Vector3.forward) * currentInput.x) + (transform.TransformDirection(Vector3.right) * currentInput.y);
+        moveDirection = (transform.TransformDirection(Vector3.forward) * currentInput.x) +
+                        (transform.TransformDirection(Vector3.right) * currentInput.y);
         moveDirection.y = moveDirectionY;
     }
 
@@ -135,12 +160,36 @@ public class FirstPersonController : MonoBehaviour
         transform.rotation *= Quaternion.Euler(0, Input.GetAxis("Mouse X") * lookSpeedX, 0);
     }
 
-    public void HandleJump()
+    private void HandleJump()
     {
-        if (ShouldJump)
+        if (ShouldJump && !isCrouching && !duringCrouchAnimation)
         {
             moveDirection.y = jumpForce;
+            footstepAudioSource.PlayOneShot(jumpClip);
         }
+    }
+
+    private float lastGroundedYPosition;
+    private float fallThreshold = 1f; 
+
+    private void HandleLandingSound()
+    {
+        if (!previouslyGrounded && characterController.isGrounded)
+        {
+            float fallDistance = lastGroundedYPosition - characterController.transform.position.y;
+
+            if (fallDistance > fallThreshold)
+            {
+                footstepAudioSource.PlayOneShot(landClip);
+            }
+        }
+
+        if (characterController.isGrounded)
+        {
+            lastGroundedYPosition = characterController.transform.position.y;
+        }
+
+        previouslyGrounded = characterController.isGrounded;
     }
 
     private void HandleCrouch()
@@ -149,24 +198,75 @@ public class FirstPersonController : MonoBehaviour
             StartCoroutine(CrouchStand());
     }
 
+    private bool wasGrounded;
+    private float landBobAmount = 0.075f; 
+    private float landBobSpeed = 4f;   
+    private float landBobTimer;
+
     private void HandleHeadBob()
     {
-        if (!characterController.isGrounded) return;
-
-        if (Mathf.Abs(moveDirection.x) > 0.1f || Mathf.Abs(moveDirection.z) > 0.1f)
+        if (!wasGrounded && characterController.isGrounded)
         {
-            timer += Time.deltaTime * (isCrouching ? crouchBobSpeed : IsSprinting ? sprintBobSpeed : walkBobSpeed);
+            float fallDistance = lastGroundedYPosition - characterController.transform.position.y;
+
+            if (fallDistance > fallThreshold)
+            {
+                landBobTimer = 0;
+            }
+        }
+
+        if (characterController.isGrounded)
+        {
+            bool isMoving = Mathf.Abs(moveDirection.x) > 0.1f || Mathf.Abs(moveDirection.z) > 0.1f;
+
+            if (isMoving)
+            {
+                timer += Time.deltaTime * (isCrouching ? crouchBobSpeed : IsSprinting ? sprintBobSpeed : walkBobSpeed);
+            }
+
+            float bobAmount = isCrouching ? crouchBobAmount : IsSprinting ? sprintBobAmount : walkBobAmount;
+            float verticalBob = Mathf.Sin(timer) * bobAmount;
+            float horizontalBob = Mathf.Cos(timer) * bobAmount * 0.25f;
+
+            float landBobVertical = 0f;
+            if (landBobTimer < 1f)
+            {
+                landBobTimer += Time.deltaTime * landBobSpeed;
+                float landBobSin = Mathf.Sin(landBobTimer * Mathf.PI);
+                landBobVertical = landBobSin * landBobAmount;
+            }
+
             playerCamera.transform.localPosition = new Vector3(
-                playerCamera.transform.localPosition.x,
-                defaultYPos + Mathf.Sin(timer) * (isCrouching ? crouchBobAmount : IsSprinting ? sprintBobAmount : walkBobAmount),
+                defaultXPos + horizontalBob,
+                defaultYPos + verticalBob - landBobVertical,
                 playerCamera.transform.localPosition.z);
         }
+        else
+        {
+            if (landBobTimer < 1f)
+            {
+                landBobTimer += Time.deltaTime * landBobSpeed;
+                float landBobSin = Mathf.Sin(landBobTimer * Mathf.PI);
+                float landBobVertical = landBobSin * landBobAmount;
+                float landBobHorizontal = landBobSin * landBobAmount * 0.5f;
+
+                playerCamera.transform.localPosition = new Vector3(
+                    defaultXPos + landBobHorizontal,
+                    defaultYPos - landBobVertical,
+                    playerCamera.transform.localPosition.z);
+            }
+        }
+
+        wasGrounded = characterController.isGrounded;
     }
 
     private void HandleFootsteps()
     {
-        if (!characterController.isGrounded) return;
-        if (currentInput == Vector2.zero) return;
+        if (!characterController.isGrounded || currentInput == Vector2.zero)
+            return;
+
+        float movementSpeed = GetMovementSpeed();
+        float footstepInterval = GetFootstepInterval(movementSpeed); 
 
         footstepTimer -= Time.deltaTime;
 
@@ -174,79 +274,143 @@ public class FirstPersonController : MonoBehaviour
         {
             if (Physics.Raycast(playerCamera.transform.position, Vector3.down, out RaycastHit hit, 3))
             {
-                PlayerAudioSource.PlayOneShot(ceramicClips[UnityEngine.Random.Range(0, ceramicClips.Length - 1)]);
-                footstepTimer = GetCurrentOffset;
+                footstepAudioSource.PlayOneShot(ceramicClips[UnityEngine.Random.Range(0, ceramicClips.Length)]);
             }
+
+            footstepTimer = footstepInterval;
         }
     }
 
-    private bool exhaustedSoundPlayed = false;
+    private float GetMovementSpeed()
+    {
+        if (isCrouching) return crouchSpeed;
+        if (IsSprinting) return sprintSpeed;
+        return walkSpeed;
+    }
+
+    private float GetFootstepInterval(float speed)
+    {
+        return baseStepSpeed / speed;
+    }
 
     private void HandleStamina()
     {
-        if (IsSprinting && currentInput != Vector2.zero)
+        if (IsSprinting && currentInput != Vector2.zero && !isCrouching)
         {
             if (regeneratingStamina != null)
             {
                 StopCoroutine(regeneratingStamina);
                 regeneratingStamina = null;
             }
-            currentStamina -= staminaUseMultiplier * Time.deltaTime;
 
-            if (currentStamina < 0)
-                currentStamina = 0;
+            currentStamina -= staminaUseMultiplier * Time.deltaTime;
+            currentStamina = Mathf.Max(currentStamina, 0);
 
             OnStaminaChange?.Invoke(currentStamina);
+            Debug.Log("Stamina: " + currentStamina);
 
-            Debug.Log("Current Stamina: " + currentStamina);
-
-            if (currentStamina <= lowStaminaThreshold && currentStamina > 0)
-                PlayerAudioSource.PlayOneShot(lowStaminaClip);
-
-            if (currentStamina <= 0 && !exhaustedSoundPlayed)
+            if (currentStamina == 0)
             {
-                PlayerAudioSource.PlayOneShot(exhaustedClip);
-                exhaustedSoundPlayed = true;
-                canSprint = false;
-                useStamina = false;
+                if(!exhaustedAudioSource.isPlaying)
+                    exhaustedAudioSource.PlayOneShot(exhaustedClip[UnityEngine.Random.Range(0, exhaustedClip.Length)]);
+                canSprint = false;   
+            }
+        }
+        else
+        {
+            if (regeneratingStamina == null)
+            {
+                regeneratingStamina = StartCoroutine(RegenerateStamina());
             }
         }
 
-        if (!IsSprinting && currentStamina < maxStamina && regeneratingStamina == null)
+        if (currentStamina <= lowStaminaThreshold && currentStamina > 0 && !footstepAudioSource.isPlaying)
         {
-            regeneratingStamina = StartCoroutine(RegenerateStamina());
+            footstepAudioSource.PlayOneShot(lowStaminaClip[UnityEngine.Random.Range(0, lowStaminaClip.Length)]);
         }
     }
 
-
-
-
     private void ApplyFinalMovements()
     {
-        if (!characterController.isGrounded)
+        if (characterController.isGrounded)
+        {
+            if (moveDirection.y < 0)
+            {
+                moveDirection.y = -2f;
+            }
+        }
+        else
+        {
             moveDirection.y -= gravity * Time.deltaTime;
+        }
 
         characterController.Move(moveDirection * Time.deltaTime);
     }
 
+    private bool CheckForObstaclesAbove()
+    {
+        float bufferHeight = 0.1f;
+        float checkHeight = characterController.height + bufferHeight;
+        int numberOfRays = 8;
+        float radius = characterController.radius;
+        Vector3 origin = characterController.transform.position + Vector3.up * (characterController.height / 2);
+
+        if (Physics.Raycast(origin, Vector3.up, checkHeight))
+            return true;
+
+        for (int i = 0; i < numberOfRays; i++)
+        {
+            float angle = i * Mathf.PI * 2 / numberOfRays;
+            Vector3 offset = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * radius;
+            Vector3 rayOrigin = origin + offset;
+
+            if (Physics.Raycast(rayOrigin, Vector3.up, checkHeight))
+                return true;
+        }
+
+        return false;
+    }
+
     private IEnumerator CrouchStand()
     {
-        if (isCrouching && Physics.Raycast(playerCamera.transform.position, Vector3.up, 1f))
+        if (isCrouching && CheckForObstaclesAbove())
             yield break;
 
         duringCrouchAnimation = true;
+        canSprint = false;
 
-        float timeElapsed = 0;
         float targetHeight = isCrouching ? standingHeight : crouchHeight;
         float currentHeight = characterController.height;
         Vector3 targetCenter = isCrouching ? standingCenter : crouchingCenter;
         Vector3 currentCenter = characterController.center;
 
-        while (timeElapsed < timeToCrouch)
+        float heightVelocity = 0;
+        Vector3 centerVelocity = Vector3.zero;
+        
+        if (isCrouching)
         {
-            characterController.height = Mathf.Lerp(currentHeight, targetHeight, timeElapsed / timeToCrouch);
-            characterController.center = Vector3.Lerp(currentCenter, targetCenter, timeElapsed / timeToCrouch);
-            timeElapsed += Time.deltaTime;
+            crouchAndStandAudioSource.PlayOneShot(crouchClip[UnityEngine.Random.Range(0, crouchClip.Length)]);
+        }
+        else
+        {
+            crouchAndStandAudioSource.PlayOneShot(standClip[UnityEngine.Random.Range(0, standClip.Length)]);
+        }
+
+        while (Mathf.Abs(characterController.height - targetHeight) > 0.001f ||
+               Vector3.Distance(characterController.center, targetCenter) > 0.001f)
+        {
+            float newHeight = Mathf.SmoothDamp(currentHeight, targetHeight, ref heightVelocity, timeToCrouch);
+            Vector3 newCenter = Vector3.SmoothDamp(currentCenter, targetCenter, ref centerVelocity, timeToCrouch);
+
+            characterController.height = newHeight;
+            characterController.center = newCenter;
+
+            float deltaHeight = newHeight - currentHeight;
+            characterController.Move(Vector3.up * deltaHeight);
+
+            currentHeight = newHeight;
+            currentCenter = newCenter;
+
             yield return null;
         }
 
@@ -254,8 +418,8 @@ public class FirstPersonController : MonoBehaviour
         characterController.center = targetCenter;
 
         isCrouching = !isCrouching;
-
         duringCrouchAnimation = false;
+        canSprint = true;
     }
 
     private IEnumerator RegenerateStamina()
@@ -264,11 +428,15 @@ public class FirstPersonController : MonoBehaviour
             yield return new WaitForSeconds(staminaRegenDelay);
 
         WaitForSeconds timeToWait = new WaitForSeconds(staminaTimeIncrement);
-
         while (currentStamina < maxStamina)
         {
-            // Check if the difference between maxStamina and currentStamina is less than staminaValueIncrement
-            if (maxStamina - currentStamina < staminaValueIncrement)
+            if (currentStamina > 0)
+            {
+                canSprint = true;
+                useStamina = true;
+            }
+
+            if ((maxStamina - currentStamina) < staminaValueIncrement)
             {
                 currentStamina = maxStamina;
             }
@@ -278,24 +446,10 @@ public class FirstPersonController : MonoBehaviour
             }
 
             OnStaminaChange?.Invoke(currentStamina);
-
-            Debug.Log("Current Stamina: " + currentStamina);
-
-            if (currentStamina > 0)
-            {
-                canSprint = true;
-                useStamina = true;
-            }
-
+            Debug.Log("Stamina : " + currentStamina);
             yield return timeToWait;
         }
-
-        // Reset exhausted sound played flag when stamina starts regenerating
-        exhaustedSoundPlayed = false;
-
         regeneratingStamina = null;
     }
-
-
 
 }
