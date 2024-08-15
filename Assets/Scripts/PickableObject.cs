@@ -80,7 +80,7 @@ public class PickableObject : MonoBehaviour, IInteractable
         holder = interactor.HoldingPosition;
         putAwayPosition = interactor.PutAwayPosition;
 
-        bool wasOnGround = !isHeld;  // Capture if the object was on the ground
+        bool wasOnGround = !isHeld;  
         isHeld = true;
         isPutAway = false;
 

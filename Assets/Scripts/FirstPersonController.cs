@@ -226,7 +226,7 @@ public class FirstPersonController : MonoBehaviour
 
             float bobAmount = isCrouching ? crouchBobAmount : IsSprinting ? sprintBobAmount : walkBobAmount;
             float verticalBob = Mathf.Sin(timer) * bobAmount;
-            float horizontalBob = Mathf.Cos(timer) * bobAmount * 0.25f;
+            float horizontalBob = Mathf.Cos(timer) * bobAmount * 0.5f;
 
             float landBobVertical = 0f;
             if (landBobTimer < 1f)
