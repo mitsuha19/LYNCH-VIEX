@@ -123,8 +123,8 @@ public class FirstPersonController : MonoBehaviour
                 HandleJump();
             if (canCrouch)
                 HandleCrouch();
-            if (canUseHeadbob)
-                HandleHeadBob(); 
+            //if (canUseHeadbob)
+                //HandleHeadBob(); 
             if (useFootsteps)
                 HandleFootsteps();
             if (useStamina)
@@ -202,63 +202,6 @@ public class FirstPersonController : MonoBehaviour
     private float landBobAmount = 0.075f; 
     private float landBobSpeed = 4f;   
     private float landBobTimer;
-
-    private void HandleHeadBob()
-    {
-        if (!wasGrounded && characterController.isGrounded)
-        {
-            float fallDistance = lastGroundedYPosition - characterController.transform.position.y;
-
-            if (fallDistance > fallThreshold)
-            {
-                landBobTimer = 0;
-            }
-        }
-
-        if (characterController.isGrounded)
-        {
-            bool isMoving = Mathf.Abs(moveDirection.x) > 0.1f || Mathf.Abs(moveDirection.z) > 0.1f;
-
-            if (isMoving)
-            {
-                timer += Time.deltaTime * (isCrouching ? crouchBobSpeed : IsSprinting ? sprintBobSpeed : walkBobSpeed);
-            }
-
-            float bobAmount = isCrouching ? crouchBobAmount : IsSprinting ? sprintBobAmount : walkBobAmount;
-            float verticalBob = Mathf.Sin(timer) * bobAmount;
-            float horizontalBob = Mathf.Cos(timer) * bobAmount * 0.5f;
-
-            float landBobVertical = 0f;
-            if (landBobTimer < 1f)
-            {
-                landBobTimer += Time.deltaTime * landBobSpeed;
-                float landBobSin = Mathf.Sin(landBobTimer * Mathf.PI);
-                landBobVertical = landBobSin * landBobAmount;
-            }
-
-            playerCamera.transform.localPosition = new Vector3(
-                defaultXPos + horizontalBob,
-                defaultYPos + verticalBob - landBobVertical,
-                playerCamera.transform.localPosition.z);
-        }
-        else
-        {
-            if (landBobTimer < 1f)
-            {
-                landBobTimer += Time.deltaTime * landBobSpeed;
-                float landBobSin = Mathf.Sin(landBobTimer * Mathf.PI);
-                float landBobVertical = landBobSin * landBobAmount;
-                float landBobHorizontal = landBobSin * landBobAmount * 0.5f;
-
-                playerCamera.transform.localPosition = new Vector3(
-                    defaultXPos + landBobHorizontal,
-                    defaultYPos - landBobVertical,
-                    playerCamera.transform.localPosition.z);
-            }
-        }
-
-        wasGrounded = characterController.isGrounded;
-    }
 
     private void HandleFootsteps()
     {
@@ -381,12 +324,14 @@ public class FirstPersonController : MonoBehaviour
 
         float targetHeight = isCrouching ? standingHeight : crouchHeight;
         float currentHeight = characterController.height;
+
         Vector3 targetCenter = isCrouching ? standingCenter : crouchingCenter;
         Vector3 currentCenter = characterController.center;
 
         float heightVelocity = 0;
         Vector3 centerVelocity = Vector3.zero;
-        
+
+        #region audio
         if (isCrouching)
         {
             crouchAndStandAudioSource.PlayOneShot(crouchClip[UnityEngine.Random.Range(0, crouchClip.Length)]);
@@ -395,6 +340,7 @@ public class FirstPersonController : MonoBehaviour
         {
             crouchAndStandAudioSource.PlayOneShot(standClip[UnityEngine.Random.Range(0, standClip.Length)]);
         }
+        #endregion
 
         while (Mathf.Abs(characterController.height - targetHeight) > 0.001f ||
                Vector3.Distance(characterController.center, targetCenter) > 0.001f)
@@ -420,6 +366,63 @@ public class FirstPersonController : MonoBehaviour
         isCrouching = !isCrouching;
         duringCrouchAnimation = false;
         canSprint = true;
+    }
+
+    private void HandleHeadBob()
+    {
+        if (!wasGrounded && characterController.isGrounded)
+        {
+            float fallDistance = lastGroundedYPosition - characterController.transform.position.y;
+
+            if (fallDistance > fallThreshold)
+            {
+                landBobTimer = 0;
+            }
+        }
+
+        if (characterController.isGrounded)
+        {
+            bool isMoving = Mathf.Abs(moveDirection.x) > 0.1f || Mathf.Abs(moveDirection.z) > 0.1f;
+
+            if (isMoving)
+            {
+                timer += Time.deltaTime * (isCrouching ? crouchBobSpeed : IsSprinting ? sprintBobSpeed : walkBobSpeed);
+            }
+
+            float bobAmount = isCrouching ? crouchBobAmount : IsSprinting ? sprintBobAmount : walkBobAmount;
+            float verticalBob = Mathf.Sin(timer) * bobAmount;
+            float horizontalBob = Mathf.Cos(timer) * bobAmount * 0.25f;
+
+            float landBobVertical = 0f;
+            if (landBobTimer < 1f)
+            {
+                landBobTimer += Time.deltaTime * landBobSpeed;
+                float landBobSin = Mathf.Sin(landBobTimer * Mathf.PI);
+                landBobVertical = landBobSin * landBobAmount;
+            }
+
+            playerCamera.transform.localPosition = new Vector3(
+                defaultXPos + horizontalBob,
+                defaultYPos + verticalBob - landBobVertical,
+                playerCamera.transform.localPosition.z);
+        }
+        else
+        {
+            if (landBobTimer < 1f)
+            {
+                landBobTimer += Time.deltaTime * landBobSpeed;
+                float landBobSin = Mathf.Sin(landBobTimer * Mathf.PI);
+                float landBobVertical = landBobSin * landBobAmount;
+                float landBobHorizontal = landBobSin * landBobAmount * 0.25f;
+
+                playerCamera.transform.localPosition = new Vector3(
+                    defaultXPos + landBobHorizontal,
+                    defaultYPos - landBobVertical,
+                    playerCamera.transform.localPosition.z);
+            }
+        }
+
+        wasGrounded = characterController.isGrounded;
     }
 
     private IEnumerator RegenerateStamina()
