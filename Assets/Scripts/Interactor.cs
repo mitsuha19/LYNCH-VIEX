@@ -40,7 +40,7 @@ public class Interactor : MonoBehaviour
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.G))
+        /*if (Input.GetKeyDown(KeyCode.G))
         {
             if (heldObject != null)
             {
@@ -48,7 +48,7 @@ public class Interactor : MonoBehaviour
                 heldObject.Drop(isSprinting);
                 heldObject = null;
             }
-        }
+        } */
 
         if (IsAimingAtPickableObject(out PickableObject pickableObject) && heldObject == null)
         {

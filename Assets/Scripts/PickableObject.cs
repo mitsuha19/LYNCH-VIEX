@@ -101,8 +101,8 @@ public class PickableObject : MonoBehaviour, IInteractable
             StopCoroutine(moveCoroutine);
         }
 
-        float moveSpeed = wasOnGround ? 4.0f : 100f;
-        float rotationSpeed = wasOnGround ? 10.0f : 50.0f;
+        float moveSpeed = 100f;
+        float rotationSpeed =  50.0f;
 
         moveCoroutine = StartCoroutine(MoveToHolder(holder, moveSpeed, rotationSpeed));
 
@@ -110,7 +110,6 @@ public class PickableObject : MonoBehaviour, IInteractable
         DisableCollisionsWithPlayer(true);
         gameObject.SetActive(true);
     }
-
 
     public void Drop(bool isSprinting)
     {
