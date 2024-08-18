@@ -77,11 +77,10 @@ public class FirstPersonController : MonoBehaviour
     [Header("Audio Sources")]
     [SerializeField] private AudioSource footstepAudioSource = default;
     [SerializeField] private AudioSource crouchAndStandAudioSource = default;
-    [SerializeField] private AudioSource exhaustedAudioSource = default;
+    [SerializeField] private AudioSource lowStaminaAudioSource = default;
 
     [Header("SFX")]
     [SerializeField] private AudioClip[] lowStaminaClip;
-    [SerializeField] private AudioClip[] exhaustedClip;
     [SerializeField] private AudioClip[] crouchClip;
     [SerializeField] private AudioClip[] standClip;
     [SerializeField] private AudioClip jumpClip;
@@ -252,12 +251,6 @@ public class FirstPersonController : MonoBehaviour
             OnStaminaChange?.Invoke(currentStamina);
             Debug.Log("Stamina: " + currentStamina);
 
-            if (currentStamina == 0)
-            {
-                if(!exhaustedAudioSource.isPlaying)
-                    exhaustedAudioSource.PlayOneShot(exhaustedClip[UnityEngine.Random.Range(0, exhaustedClip.Length)]);
-                canSprint = false;   
-            }
         }
         else
         {
@@ -267,9 +260,9 @@ public class FirstPersonController : MonoBehaviour
             }
         }
 
-        if (currentStamina <= lowStaminaThreshold && currentStamina > 0 && !footstepAudioSource.isPlaying)
+        if (currentStamina <= lowStaminaThreshold  && !lowStaminaAudioSource.isPlaying)
         {
-            footstepAudioSource.PlayOneShot(lowStaminaClip[UnityEngine.Random.Range(0, lowStaminaClip.Length)]);
+            lowStaminaAudioSource.PlayOneShot(lowStaminaClip[UnityEngine.Random.Range(0, lowStaminaClip.Length)]);
         }
     }
 
