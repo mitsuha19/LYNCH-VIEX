@@ -13,6 +13,7 @@ public class PickableObject : MonoBehaviour, IInteractable
     private Animator animator;
     private Transform putAwayPosition;
     private GameObject lighterEffects;
+    public GameObject Glowing;
 
     [SerializeField] private AudioSource lighterAudioSource = default;
     [SerializeField] private AudioClip openClip;
@@ -80,8 +81,8 @@ public class PickableObject : MonoBehaviour, IInteractable
         holder = interactor.HoldingPosition;
         putAwayPosition = interactor.PutAwayPosition;
 
-        bool wasOnGround = !isHeld;  
         isHeld = true;
+        Glowing.SetActive(false);
         isPutAway = false;
 
         if (CompareTag("Lighter"))
