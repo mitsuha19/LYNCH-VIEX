@@ -15,34 +15,33 @@ public class EnemyAI : MonoBehaviour
     public Transform player;
     Transform currentDest;
     Vector3 dest;
-    int randNum;
-    public int destinationAmount;
     public Vector3 rayCastOffset;
+    public float aiDistance;
 
     void Start()
     {
         walking = true;
-        randNum = Random.Range(0, destinationAmount);
-        currentDest = destinations[randNum];
+        currentDest = destinations[Random.Range(0, destinations.Count)];
     }
 
     void Update()
     {
         Vector3 direction = (player.position - transform.position).normalized;
         RaycastHit hit;
+        aiDistance = Vector3.Distance(player.position, this.transform.position);
         if (Physics.Raycast(transform.position + rayCastOffset, direction, out hit, sightDistance))
         {
             if (hit.collider.gameObject.tag == "Player")
             {
                 walking = false;
-                StopCoroutine("stayIdle");
-                StopCoroutine("chaseRoutine");
-                StartCoroutine("chaseRoutine");
+                StopCoroutine("StayIdle");
+                StopCoroutine("ChaseRoutine");
+                StartCoroutine("ChaseRoutine");
                 chasing = true;
             }
         }
 
-        if (chasing == true)
+        if (chasing == true) 
         {
             dest = player.position;
             ai.destination = dest;
@@ -50,14 +49,14 @@ public class EnemyAI : MonoBehaviour
             //animator.ResetTrigger("Idle");
             //animator.ResetTrigger("Walk");
             //animator.SetTrigger("Sprint");
-            if (ai.remainingDistance <= catchDistance)
+            if (aiDistance <= catchDistance)
             {
                 //player.gameObject.SetActive(false);
                 //animator.ResetTrigger("Idle");
                 //animator.ResetTrigger("Walk");
                 //animator.ResetTrigger("Sprint");
                 //animator.SetTrigger("Jumpscare");
-                StartCoroutine(deathRoutine());
+                StartCoroutine(DeathRoutine());
                 chasing = false;
             }
         }
@@ -76,33 +75,37 @@ public class EnemyAI : MonoBehaviour
                 //animator.ResetTrigger("Walk");
                 //animator.SetTrigger("Idle");
                 ai.speed = 0;
-                StopCoroutine("stayIdle");
-                StartCoroutine("stayIdle");
+                StopCoroutine("StayIdle");
+                StartCoroutine("StayIdle");
                 walking = false;
             }
         }
     }
 
-    IEnumerator stayIdle()
+    IEnumerator StayIdle()
     {
         idleTime = Random.Range(minIdleTime, maxIdleTime);
         yield return new WaitForSeconds(idleTime);
         walking = true;
-        randNum = Random.Range(0, destinationAmount);
-        currentDest = destinations[randNum];
+        currentDest = destinations[Random.Range(0, destinations.Count)];
     }
 
-    IEnumerator chaseRoutine()
+    IEnumerator ChaseRoutine()
     {
         chaseTime = Random.Range(minChaseTime, maxChaseTime);
         yield return new WaitForSeconds(chaseTime);
-        walking = true;
-        chasing = false;
-        randNum = Random.Range(0, destinationAmount);
-        currentDest = destinations[randNum];
+        StopChase();
     }
 
-    IEnumerator deathRoutine()
+    public void StopChase()
+    {
+        walking = true;
+        chasing = false;
+        StopCoroutine(ChaseRoutine());
+        currentDest = destinations[Random.Range(0, destinations.Count)];
+    }
+
+    IEnumerator DeathRoutine()
     {
         yield return new WaitForSeconds(jumpscareTime);
         SceneManager.LoadScene("DeathScene");
