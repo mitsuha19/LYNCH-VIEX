@@ -6,7 +6,7 @@ public class FirstPersonController : MonoBehaviour
 {
     public bool CanMove { get; private set; } = true;
 
-    public bool IsSprinting => canSprint && Input.GetKey(sprintKey) && !isCrouching && isMovingForward && currentStamina > 0;
+    public bool IsSprinting => canSprint && Input.GetKey(sprintKey) && !isCrouching && isMovingForward && currentStamina > 0 && !IsCollidingWithObstacle();
 
     private bool ShouldJump => Input.GetKeyDown(jumpKey) && characterController.isGrounded && !isCrouching && !duringCrouchAnimation;
 
@@ -133,6 +133,21 @@ public class FirstPersonController : MonoBehaviour
 
             ApplyFinalMovements();
         }
+    }
+
+
+    private bool IsCollidingWithObstacle()
+    {
+        float castDistance = 0.9f; // Adjust the distance as needed
+        Vector3 direction = transform.TransformDirection(Vector3.forward);
+
+        // Perform a raycast to check for obstacles directly in front of the player
+        if (Physics.Raycast(transform.position, direction, castDistance))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private void HandleMovementInput()

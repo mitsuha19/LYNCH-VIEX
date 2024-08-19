@@ -12,15 +12,12 @@ public class Interactor : MonoBehaviour
     public Transform PutAwayPosition;
     public CanvasGroup interactionText;
     public PickableObject heldObject;
-    private FirstPersonController playerController;
     private Note currentNote;
-    private Door currentDoor;
-    private WardrobeDoor currentWarDoor;
+    private Door currentDoor;   
 
     void Start()
     {
         GameObject player = GameObject.FindWithTag("Player");
-        playerController = player.GetComponent<FirstPersonController>();
     }
 
     void Update()
@@ -41,16 +38,6 @@ public class Interactor : MonoBehaviour
             }
         }
 
-        /*if (Input.GetKeyDown(KeyCode.G))
-        {
-            if (heldObject != null)
-            {
-                bool isSprinting = playerController != null && playerController.IsSprinting;
-                heldObject.Drop(isSprinting);
-                heldObject = null;
-            }
-        } */
-
         if (IsAimingAtPickableObject(out PickableObject pickableObject) && heldObject == null)
         {
             ShowInteractionText();
@@ -65,11 +52,6 @@ public class Interactor : MonoBehaviour
             currentDoor = door;
             ShowOpenText(door);
         }
-        else if (IsAimingAtWarDoor(out WardrobeDoor wardoor))
-        {
-            currentWarDoor = wardoor;
-            ShowOpenTextWar(wardoor);
-        }
         else
         {
             HideInteractionText();
@@ -77,8 +59,6 @@ public class Interactor : MonoBehaviour
             currentNote = null;
             HideOpenText();
             currentDoor = null;
-            HideOpenTextWar();
-            currentWarDoor = null;
         }
     }
 
@@ -159,28 +139,6 @@ public class Interactor : MonoBehaviour
         return false;
     }
 
-    private bool IsAimingAtWarDoor(out WardrobeDoor door)
-    {
-        Ray r = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
-
-        if (Physics.Raycast(r, out RaycastHit hitInfo, InteractRange))
-        {
-            if (hitInfo.collider.gameObject.TryGetComponent(out door))
-            {
-                return true;
-            }
-
-            if (hitInfo.collider.bounds.Intersects(hitInfo.collider.bounds))
-            {
-                door = hitInfo.collider.GetComponent<WardrobeDoor>();
-                return door != null;
-            }
-        }
-        door = null;
-        return false;
-    }
-
-
     private void ShowInteractionText()
     {
         interactionText.alpha = 1;
@@ -219,13 +177,6 @@ public class Interactor : MonoBehaviour
         door.openText.blocksRaycasts = true;
     }
 
-    private void ShowOpenTextWar(WardrobeDoor door)
-    {
-        door.openText.alpha = 1;
-        door.openText.interactable = true;
-        door.openText.blocksRaycasts = true;
-    }
-
     private void HideOpenText()
     {
         if (currentDoor != null)
@@ -233,16 +184,6 @@ public class Interactor : MonoBehaviour
             currentDoor.openText.alpha = 0;
             currentDoor.openText.interactable = false;
             currentDoor.openText.blocksRaycasts = false;
-        }
-    }
-
-    private void HideOpenTextWar()
-    {
-        if (currentWarDoor != null)
-        {
-            currentWarDoor.openText.alpha = 0;
-            currentWarDoor.openText.interactable = false;
-            currentWarDoor.openText.blocksRaycasts = false;
         }
     }
 }

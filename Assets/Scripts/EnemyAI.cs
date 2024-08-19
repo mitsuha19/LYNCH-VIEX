@@ -10,8 +10,8 @@ public class EnemyAI : MonoBehaviour
     public NavMeshAgent ai;
     public List<Transform> destinations;
     public Animator animator;
-    public float walkSpeed, chaseSpeed, idleTime, minIdleTime, maxIdleTime, sightDistance, minChaseTime, maxChaseTime, chaseTime, jumpscareTime, catchDistance;
-    public bool walking, chasing;
+    public float walkSpeed, chaseSpeed, idleTime, minIdleTime, maxIdleTime, searchDistance, sightDistance, minChaseTime, maxChaseTime, jumpscareTime, catchDistance, minSearchTime, maxSearchTime;
+    public bool walking, chasing, searching;
     public Transform player;
     Transform currentDest;
     Vector3 dest;
@@ -35,9 +35,27 @@ public class EnemyAI : MonoBehaviour
             {
                 walking = false;
                 StopCoroutine("StayIdle");
+                StopCoroutine("SearchRoutine");
+                StartCoroutine("SearchRoutine");
+                searching = true;
+            }
+        }
+
+        if(searching == true)
+        {
+            ai.speed = 0;
+            //animator.ResetTrigger("Idle");
+            //animator.ResetTrigger("Walk");
+            //animator.ResetTrigger("Sprint");
+            //animator.SetTrigger("Search");
+            if(aiDistance <= searchDistance)
+            {
+                StopCoroutine("StayIdle");
                 StopCoroutine("ChaseRoutine");
+                StopCoroutine("SearchRoutine");
                 StartCoroutine("ChaseRoutine");
                 chasing = true;
+                searching = false;
             }
         }
 
@@ -48,6 +66,7 @@ public class EnemyAI : MonoBehaviour
             ai.speed = chaseSpeed;
             //animator.ResetTrigger("Idle");
             //animator.ResetTrigger("Walk");
+            //animator.ResetTrigger("Search");
             //animator.SetTrigger("Sprint");
             if (aiDistance <= catchDistance)
             {
@@ -55,6 +74,7 @@ public class EnemyAI : MonoBehaviour
                 //animator.ResetTrigger("Idle");
                 //animator.ResetTrigger("Walk");
                 //animator.ResetTrigger("Sprint");
+                //animator.ResetTrigger("Search");
                 //animator.SetTrigger("Jumpscare");
                 StartCoroutine(DeathRoutine());
                 chasing = false;
@@ -68,11 +88,13 @@ public class EnemyAI : MonoBehaviour
             ai.speed = walkSpeed;
             //animator.ResetTrigger("Sprint");
             //animator.ResetTrigger("Idle");
+            //animator.ResetTrigger("Search");
             //animator.SetTrigger("Walk");
             if (ai.remainingDistance <= ai.stoppingDistance)
             {
                 //animator.ResetTrigger("Sprint");
                 //animator.ResetTrigger("Walk");
+                //animator.ResetTrigger("Search");
                 //animator.SetTrigger("Idle");
                 ai.speed = 0;
                 StopCoroutine("StayIdle");
@@ -92,8 +114,7 @@ public class EnemyAI : MonoBehaviour
 
     IEnumerator ChaseRoutine()
     {
-        chaseTime = Random.Range(minChaseTime, maxChaseTime);
-        yield return new WaitForSeconds(chaseTime);
+        yield return new WaitForSeconds(Random.Range(minChaseTime, maxChaseTime));
         StopChase();
     }
 
@@ -102,6 +123,14 @@ public class EnemyAI : MonoBehaviour
         walking = true;
         chasing = false;
         StopCoroutine(ChaseRoutine());
+        currentDest = destinations[Random.Range(0, destinations.Count)];
+    }
+
+    IEnumerator SearchRoutine()
+    {
+        yield return new WaitForSeconds(Random.Range(minSearchTime, maxSearchTime));
+        searching = false;
+        walking = true;
         currentDest = destinations[Random.Range(0, destinations.Count)];
     }
 
