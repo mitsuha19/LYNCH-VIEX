@@ -66,6 +66,15 @@ public class HidingPlace : MonoBehaviour
                 normalPlayer.SetActive(true);
                 hidingPlayer.SetActive(false);
                 hiding = false;
+
+                // If the player was crouched before hiding, force them to stand
+                FirstPersonController playerController = normalPlayer.GetComponent<FirstPersonController>();
+                playerController.isExitingHidingPlace = true;
+
+                if (CompareTag(ClosetTag) && closetHideClip != null)
+                {
+                    audioSource.PlayOneShot(closetHideClip);
+                }
             }
             return;
         }
@@ -113,7 +122,7 @@ public class HidingPlace : MonoBehaviour
             if (activeHidingPlace == this)
             {
                 hideText.SetActive(false);
-                activeHidingPlace = null; // Clear the active hiding place if this one is no longer active
+                activeHidingPlace = null; 
             }
         }
     }

@@ -1,40 +1,91 @@
 using UnityEngine;
-using UnityEngine.UI;
+
+public static class DiaryTutorial
+{
+    public static bool tutorialShown = false;
+
+    public static void MarkTutorialAsShown()
+    {
+        tutorialShown = true;
+    }
+}
 
 public class Diary : MonoBehaviour, IInteractable
 {
     public CanvasGroup readText;
-    public CanvasGroup DiaryUI;
-    public GameObject DiaryUIObject;
-    public Button closeButton;
+    public GameObject diaryUIObject;
     public AudioClip readSound;
     public AudioClip exitSound;
     private AudioSource audioSource;
-    private FirstPersonController playerController;
+    public FirstPersonController playerController;
+    public GameObject tutorialText;
+    public MeshRenderer diaryMesh;
+    public MeshCollider diaryMeshCollider;
+
+    private bool isInInventory = false; // Tracks if the diary is in the player's inventory
+    private bool isDiaryVisible = false; // Tracks the current visibility of the diary
 
     void Start()
     {
-        DiaryUIObject.SetActive(false);
-        DiaryUI.alpha = 0;
-        closeButton.onClick.AddListener(HideDiaryUI);
-
-        GameObject player = GameObject.FindWithTag("Player");
-        playerController = player.GetComponent<FirstPersonController>();
-
+        diaryUIObject.SetActive(false);
         audioSource = gameObject.AddComponent<AudioSource>();
+
+        // If the tutorial has already been shown, ensure the tutorial text is inactive from the start
+        if (DiaryTutorial.tutorialShown)
+        {
+            tutorialText.SetActive(false);
+        }
+    }
+
+    void Update()
+    {
+        if (isInInventory && Input.GetKeyDown(KeyCode.Tab))
+        {
+            if (isDiaryVisible)
+            {
+                HideDiaryUI();
+            }
+            else
+            {
+                ShowDiaryUI();
+            }
+        }
     }
 
     public void Interact()
     {
-        ShowDiaryUI();
+        diaryMesh.enabled = false;
+        diaryMeshCollider.enabled = false;
+        if (!isInInventory)
+        {
+            // First interaction: add the diary to the inventory
+            isInInventory = true;
+            ShowDiaryUI();
+
+            // Show the tutorial text if it hasn't been shown yet
+            if (!DiaryTutorial.tutorialShown)
+            {
+                tutorialText.SetActive(true);
+                DiaryTutorial.MarkTutorialAsShown();
+            }
+        }
+        else
+        {
+            if (isDiaryVisible)
+            {
+                HideDiaryUI();
+            }
+            else
+            {
+                ShowDiaryUI();
+            }
+        }
     }
 
     public void ShowDiaryUI()
     {
-        DiaryUIObject.SetActive(true);
-        DiaryUI.alpha = 1;
-        DiaryUI.interactable = true;
-        DiaryUI.blocksRaycasts = true;
+        diaryUIObject.SetActive(true);
+        isDiaryVisible = true;
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -46,10 +97,9 @@ public class Diary : MonoBehaviour, IInteractable
 
     public void HideDiaryUI()
     {
-        DiaryUIObject.SetActive(false);
-        DiaryUI.alpha = 0;
-        DiaryUI.interactable = false;
-        DiaryUI.blocksRaycasts = false;
+        audioSource.volume = 0.5f;
+        diaryUIObject.SetActive(false);
+        isDiaryVisible = false;
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -59,3 +109,5 @@ public class Diary : MonoBehaviour, IInteractable
         audioSource.PlayOneShot(exitSound);
     }
 }
+
+

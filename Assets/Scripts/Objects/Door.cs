@@ -1,40 +1,95 @@
 ﻿using UnityEngine;
-
+using System.Collections;
 public class Door : MonoBehaviour, IInteractable
 {
     private bool isClose = true;
+    public bool isLocked = false;
+    public string requiredKeyID;
     public AudioClip openSound;
     public AudioClip closeSound;
-    public CanvasGroup openText; 
+    public GameObject doorText;
+    public GameObject lockedText;
+    public AudioClip lockedSound;
+    public AudioClip unlockedSound;
 
-    private AudioSource audioSource;
+    public AudioSource audioSource;
     private Animator animator;
+
+    public Interactor interactor;
 
     void Start()
     {
-        audioSource = gameObject.AddComponent<AudioSource>();
         animator = GetComponentInParent<Animator>();
+        lockedText.SetActive(false);
+        doorText.SetActive(false);
     }
 
-    public void Interact()
+    public virtual void Interact()
     {
-        if (!isClose)
-            CloseDoor();
+        if (isLocked)
+        {
+            if (Inventory.HasItem(requiredKeyID))
+            {
+                UnlockDoor();
+            }
+            else
+            {
+                StartCoroutine(ShowLockedTextWithDelay());
+                audioSource.PlayOneShot(lockedSound);
+                return;
+            }
+        }
         else
-            OpenDoor();
+        {
+            if (isClose)
+                OpenDoor();
+            else
+                CloseDoor();
+        }
     }
 
     private void OpenDoor()
     {
-        animator.SetTrigger("TrOpen"); 
+        animator.SetTrigger("TrOpen");
         audioSource.PlayOneShot(openSound);
         isClose = false;
     }
 
     private void CloseDoor()
     {
-        animator.SetTrigger("TrClose"); 
+        animator.SetTrigger("TrClose");
         audioSource.PlayOneShot(closeSound);
         isClose = true;
+    }
+
+    private void UnlockDoor()
+    {
+        isLocked = false;
+        audioSource.PlayOneShot(unlockedSound);
+    }
+
+    private IEnumerator ShowLockedTextWithDelay()
+    {
+        HideDoorText();  
+        lockedText.SetActive(true);  
+        yield return new WaitForSeconds(0.5f); 
+        lockedText.SetActive(false);
+        if (interactor.IsAimingAtDoor(out Door door))
+            ShowDoorText();
+    }
+
+    public void ShowDoorText()
+    {
+        doorText.SetActive(true);
+    }
+
+    public void HideDoorText()
+    {
+        doorText.SetActive(false);
+    }
+
+    public void HideLockedText()
+    {
+        lockedText.SetActive(false);
     }
 }

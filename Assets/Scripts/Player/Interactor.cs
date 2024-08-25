@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 interface IInteractable
 {
@@ -11,9 +12,11 @@ public class Interactor : MonoBehaviour
     public Transform HoldingPosition;
     public Transform PutAwayPosition;
     public CanvasGroup interactionText;
-    public PickableObject heldObject;
+    public Lighter heldObject;
     private Note currentNote;
-    private Door currentDoor;   
+    private Door currentDoor;
+    private Diary currentDiary;
+    private Key currentKey;
 
     void Start()
     {
@@ -24,48 +27,82 @@ public class Interactor : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.E))
         {
-            if (heldObject == null && currentNote == null && currentDoor == null)
-            {
-                Interact();
-            }
-            else if (currentNote != null)
-            {
-                currentNote.ShowNoteUI();
-            }
-            else if (currentDoor != null)
-            {
-                currentDoor.Interact();
-            }
+            InteractWithTarget();
         }
 
-        if (IsAimingAtPickableObject(out PickableObject pickableObject) && heldObject == null)
+        if (IsAimingAtPickableObject(out Lighter pickableObject) && heldObject == null)
         {
             ShowInteractionText();
         }
         else if (IsAimingAtNoteObject(out Note note))
         {
             currentNote = note;
-            ShowReadText(note);
+            ShowNoteText(note);
+        }
+        else if (IsAimingAtDiaryObject(out Diary diary))
+        {
+            currentDiary = diary;
+            ShowDiaryText(diary);
+        }
+        else if (IsAimingAtKeyObject(out Key key))
+        {
+            currentKey = key;
+            ShowKeyText(key);
         }
         else if (IsAimingAtDoor(out Door door))
         {
-            currentDoor = door;
-            ShowOpenText(door);
+            if (currentDoor != door)
+            {
+                if (currentDoor != null)
+                {
+                    currentDoor.HideDoorText();
+                    currentDoor = null;
+                }
+                currentDoor = door;
+                currentDoor.ShowDoorText();  
+            }
         }
         else
         {
             HideInteractionText();
-            HideReadText();
+            HideNoteText();
             currentNote = null;
-            HideOpenText();
+            HideDiaryText();
+            currentDiary = null;
+            HideKeyText();
+            currentKey = null;
+            HideDoorText();
             currentDoor = null;
+        }
+    }
+
+    private void InteractWithTarget()
+    {
+        if (heldObject == null && currentNote == null && currentDoor == null && currentKey == null)
+        {
+            Interact();
+        }
+        else if (currentNote != null)
+        {
+            currentNote.ShowNoteUI();
+        }
+        else if (currentDiary != null)
+        {
+            currentDiary.Interact();
+        }
+        else if (currentDoor != null)
+        {
+            currentDoor.Interact();  
+        }
+        else if (currentKey != null)
+        {
+            currentKey.Interact();
         }
     }
 
     private void Interact()
     {
         Ray r = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
-
         Debug.DrawLine(r.origin, r.origin + r.direction * InteractRange, Color.red, 2.0f);
 
         if (Physics.Raycast(r, out RaycastHit hitInfo, InteractRange))
@@ -73,7 +110,8 @@ public class Interactor : MonoBehaviour
             if (hitInfo.collider.gameObject.TryGetComponent(out IInteractable interactObj))
             {
                 interactObj.Interact();
-                if (interactObj is PickableObject pickableObject)
+
+                if (interactObj is Lighter pickableObject)
                 {
                     heldObject = pickableObject;
                 }
@@ -91,7 +129,8 @@ public class Interactor : MonoBehaviour
         }
     }
 
-    private bool IsAimingAtPickableObject(out PickableObject pickableObject)
+    #region aimRaycasts
+    private bool IsAimingAtPickableObject(out Lighter pickableObject)
     {
         Ray r = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
 
@@ -118,27 +157,48 @@ public class Interactor : MonoBehaviour
         }
     }
 
-    private bool IsAimingAtDoor(out Door door)
+    private bool IsAimingAtDiaryObject(out Diary diary)
     {
         Ray r = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
 
         if (Physics.Raycast(r, out RaycastHit hitInfo, InteractRange))
         {
-            if (hitInfo.collider.gameObject.TryGetComponent(out door))
-            {
-                return true;
-            }
-
-            if (hitInfo.collider.bounds.Intersects(hitInfo.collider.bounds))
-            {
-                door = hitInfo.collider.GetComponent<Door>();
-                return door != null;
-            }
+            return hitInfo.collider.gameObject.TryGetComponent(out diary);
         }
+        else
+        {
+            diary = null;
+            return false;
+        }
+    }
+
+    public bool IsAimingAtDoor(out Door door)
+    {
+        Ray r = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
+
+        if (Physics.Raycast(r, out RaycastHit hitInfo, InteractRange))
+        {
+            return hitInfo.collider.gameObject.TryGetComponent(out door);
+        }
+
         door = null;
         return false;
     }
 
+    private bool IsAimingAtKeyObject(out Key key)
+    {
+        Ray r = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
+
+        if (Physics.Raycast(r, out RaycastHit hitInfo, InteractRange))
+        {
+            return hitInfo.collider.gameObject.TryGetComponent(out key);
+        }
+        key = null;
+        return false;
+    }
+    #endregion
+
+    #region interactTexts
     private void ShowInteractionText()
     {
         interactionText.alpha = 1;
@@ -153,14 +213,14 @@ public class Interactor : MonoBehaviour
         interactionText.blocksRaycasts = false;
     }
 
-    private void ShowReadText(Note note)
+    private void ShowNoteText(Note note)
     {
         note.readText.alpha = 1;
         note.readText.interactable = true;
         note.readText.blocksRaycasts = true;
     }
 
-    private void HideReadText()
+    private void HideNoteText()
     {
         if (currentNote != null)
         {
@@ -170,20 +230,56 @@ public class Interactor : MonoBehaviour
         }
     }
 
-    private void ShowOpenText(Door door)
+    private void ShowKeyText(Key key)
     {
-        door.openText.alpha = 1;
-        door.openText.interactable = true;
-        door.openText.blocksRaycasts = true;
+        currentKey.keyText.SetActive(true);
     }
 
-    private void HideOpenText()
+    private void HideKeyText()
+    {
+        if (currentKey != null)
+        {
+            currentKey.keyText.SetActive(false);
+        }
+    }
+
+    private void ShowDiaryText(Diary diary)
+    {
+        diary.readText.alpha = 1;
+        diary.readText.interactable = true;
+        diary.readText.blocksRaycasts = true;
+    }
+
+    private void HideDiaryText()
+    {
+        if (currentDiary != null)
+        {
+            currentDiary.readText.alpha = 0;
+            currentDiary.readText.interactable = false;
+            currentDiary.readText.blocksRaycasts = false;
+        }
+    }
+
+    public void ShowDoorText(Door door)
+    {
+        door.doorText.SetActive(true);
+    }
+
+    private void HideLockedText()
     {
         if (currentDoor != null)
         {
-            currentDoor.openText.alpha = 0;
-            currentDoor.openText.interactable = false;
-            currentDoor.openText.blocksRaycasts = false;
+            currentDoor.lockedText.SetActive(false);
         }
     }
+
+    private void HideDoorText()
+    {
+        if (currentDoor != null)
+        {
+            currentDoor.doorText.SetActive(false);
+        }
+    }
+    #endregion
+
 }

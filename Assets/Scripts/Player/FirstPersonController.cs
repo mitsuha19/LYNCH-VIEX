@@ -10,7 +10,7 @@ public class FirstPersonController : MonoBehaviour
 
     private bool ShouldJump => Input.GetKeyDown(jumpKey) && characterController.isGrounded && !isCrouching && !duringCrouchAnimation;
 
-    private bool ShouldCrouch => Input.GetKeyDown(crouchKey) && !duringCrouchAnimation && characterController.isGrounded;
+    public bool ShouldCrouch => Input.GetKeyDown(crouchKey) && !duringCrouchAnimation  && characterController.isGrounded;
 
     [Header("Functional Options")]
     [SerializeField] private bool canJump = true;
@@ -99,6 +99,8 @@ public class FirstPersonController : MonoBehaviour
     private Vector2 currentInput;
 
     private float rotationX = 0;
+
+    public bool isExitingHidingPlace = false;
 
     void Awake()
     {
@@ -191,7 +193,7 @@ public class FirstPersonController : MonoBehaviour
         previouslyGrounded = characterController.isGrounded;
     }
 
-    private void HandleCrouch()
+    public void HandleCrouch()
     {
         if (ShouldCrouch)
             StartCoroutine(CrouchStand());
@@ -315,6 +317,13 @@ public class FirstPersonController : MonoBehaviour
         duringCrouchAnimation = true;
         canSprint = false;
 
+        // Force standing if exiting a hiding place
+        bool forceStand = isExitingHidingPlace && isCrouching;
+        if (forceStand)
+        {
+            isCrouching = false;
+        }
+
         float targetHeight = isCrouching ? standingHeight : crouchHeight;
         float currentHeight = characterController.height;
 
@@ -356,12 +365,21 @@ public class FirstPersonController : MonoBehaviour
         characterController.height = targetHeight;
         characterController.center = targetCenter;
 
-        isCrouching = !isCrouching;
+        if (forceStand)
+        {
+            isCrouching = false;
+            isExitingHidingPlace = false; 
+        }
+        else
+        {
+            isCrouching = !isCrouching;
+        }
+
         duringCrouchAnimation = false;
         canSprint = true;
     }
 
-    private void HandleHeadBob()
+private void HandleHeadBob()
     {
         if (!wasGrounded && characterController.isGrounded)
         {

@@ -9,7 +9,7 @@ public class EnemyAI : MonoBehaviour
 {
     public NavMeshAgent ai;
     public List<Transform> destinations;
-    public Animator animator;
+    public Animator animator;   
     public float walkSpeed, chaseSpeed, idleTime, minIdleTime, maxIdleTime, searchDistance, sightDistance, minChaseTime, maxChaseTime, jumpscareTime, catchDistance, minSearchTime, maxSearchTime;
     public bool walking, chasing, searching;
     public Transform player;
