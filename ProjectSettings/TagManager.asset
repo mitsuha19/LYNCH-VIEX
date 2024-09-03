@@ -8,6 +8,7 @@ TagManager:
   - Lighter
   - WardrobeDoor
   - Closet
+  - Ladder
   layers:
   - Default
   - TransparentFX
