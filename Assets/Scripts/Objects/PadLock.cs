@@ -14,10 +14,12 @@ public class PadLock : MonoBehaviour
     {
         coroutineAllowed = true;
         numberShown = 0;
+        Debug.Log("PadLock script is active on " + gameObject.name);
     }
 
     private void OnMouseDown()
     {
+        Debug.Log("Clicked on " + gameObject.name);
         if (coroutineAllowed)
         {
             StartCoroutine(RotateWheel());
@@ -41,11 +43,5 @@ public class PadLock : MonoBehaviour
             numberShown = 0;
         }
         Rotated(name, numberShown);
-    }
-
-
-    void Update()
-    {
-
     }
 }

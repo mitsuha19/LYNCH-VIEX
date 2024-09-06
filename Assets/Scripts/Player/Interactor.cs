@@ -17,6 +17,8 @@ public class Interactor : MonoBehaviour
     private Door currentDoor;
     private Diary currentDiary;
     private Key currentKey;
+    private PadLockRay currentPadlock;
+
 
     void Start()
     {
@@ -29,7 +31,6 @@ public class Interactor : MonoBehaviour
         {
             InteractWithTarget();
         }
-
         if (IsAimingAtPickableObject(out Lighter pickableObject) && heldObject == null)
         {
             ShowInteractionText();
@@ -48,6 +49,11 @@ public class Interactor : MonoBehaviour
         {
             currentKey = key;
             ShowKeyText(key);
+        }
+        else if (IsAimingAtPadlockObject(out PadLockRay padlock))
+        {
+            currentPadlock = padlock;
+            ShowPadlockText(padlock);
         }
         else if (IsAimingAtDoor(out Door door))
         {
@@ -73,6 +79,8 @@ public class Interactor : MonoBehaviour
             currentKey = null;
             HideDoorText();
             currentDoor = null;
+            HidePadlockText();
+            currentPadlock = null;
         }
     }
 
@@ -109,7 +117,17 @@ public class Interactor : MonoBehaviour
         {
             if (hitInfo.collider.gameObject.TryGetComponent(out IInteractable interactObj))
             {
-                interactObj.Interact();
+
+                Debug.Log("Interacting with: " + interactObj);
+
+                if (interactObj != null)
+                {
+                    interactObj.Interact();  
+                }
+                else
+                {
+                    Debug.LogError("interactObj is null!");
+                }
 
                 if (interactObj is Lighter pickableObject)
                 {
@@ -196,6 +214,20 @@ public class Interactor : MonoBehaviour
         key = null;
         return false;
     }
+
+    private bool IsAimingAtPadlockObject(out PadLockRay padlock)
+    {
+        Ray r = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
+
+        if (Physics.Raycast(r, out RaycastHit hitInfo, InteractRange))
+        {
+            return hitInfo.collider.gameObject.TryGetComponent(out padlock);
+        }
+
+        padlock = null;
+        return false;   
+    }
+
     #endregion
 
     #region interactTexts
@@ -279,6 +311,20 @@ public class Interactor : MonoBehaviour
         {
             currentDoor.doorText.SetActive(false);
         }
+    }
+
+    private void ShowPadlockText(PadLockRay padlock)
+    {
+            
+            padlock.padlockTextObject.SetActive(true);
+    }
+
+    private void HidePadlockText()
+    {
+            if (currentPadlock != null)
+            {
+                currentPadlock.padlockTextObject.SetActive(false);
+            }
     }
     #endregion
 
