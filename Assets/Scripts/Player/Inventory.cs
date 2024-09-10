@@ -5,7 +5,7 @@ public class Inventory : MonoBehaviour
 {
     private static Inventory instance;
 
-    private HashSet<string> items = new HashSet<string>();  // Set of item IDs
+    private HashSet<string> items = new HashSet<string>();  
 
     void Awake()
     {
