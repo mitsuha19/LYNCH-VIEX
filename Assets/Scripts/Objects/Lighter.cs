@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public class PickableObject : MonoBehaviour, IInteractable
+public class Lighter : MonoBehaviour, IInteractable
 {
     private bool isHeld = false;
     private bool isPutAway = false;
