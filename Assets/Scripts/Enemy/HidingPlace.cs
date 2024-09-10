@@ -118,7 +118,7 @@ public class HidingPlace : MonoBehaviour
         }
     }
 
-    private bool IsAimingAtWardrobeDoor(out Collider wardrobeDoorCollider)
+    private bool IsAimingAtWardrobeDoor(out Collider wardrobeDoorCollider)  
     {
         Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
 
@@ -134,4 +134,6 @@ public class HidingPlace : MonoBehaviour
         wardrobeDoorCollider = null;
         return false;
     }
+
+
 }
