@@ -31,7 +31,7 @@ public class HidingPlace : MonoBehaviour
     {
         hiding = false;
         playerInTrigger = false;
-        hideText.SetActive(false);
+        //hideText.SetActive(false);
     }
 
     void OnTriggerEnter(Collider other)
