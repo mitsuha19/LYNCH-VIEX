@@ -1,13 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PauseMenu : MonoBehaviour
 {
     public static bool GameisPause = false;
     public GameObject pauseMenuUI;
-    public GameObject Player;
+    public FirstPersonController playerController;
     public GameObject Surti;
+    public GameObject aimDot;
 
     // Update is called once per frame
     void Update()
@@ -25,13 +27,16 @@ public class PauseMenu : MonoBehaviour
         }
     }
 
-    void Resume()
+    public void Resume()
     {
         pauseMenuUI.SetActive(false);
         Time.timeScale = 1f;
         GameisPause = false;
-        Player.SetActive(false);
-        Surti.SetActive(false);
+        playerController.enabled = true;
+        Surti.SetActive(true);
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        aimDot.SetActive(true);
     }
 
     void Pause()
@@ -39,7 +44,20 @@ public class PauseMenu : MonoBehaviour
         pauseMenuUI.SetActive(true);
         Time.timeScale = 0f;
         GameisPause = true;
-        Player.SetActive(true);
-        Surti.SetActive(true);
+        playerController.enabled = false;
+        Surti.SetActive(false);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        aimDot.SetActive(false);
+    }
+
+    public void MainMenu()
+    {
+        SceneManager.LoadScene("MainMenu");
+    }
+
+    public void Quit()
+    {
+        Application.Quit(); 
     }
 }
