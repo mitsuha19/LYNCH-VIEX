@@ -4,15 +4,16 @@ using UnityEngine;
 
 public class TypingEffect : MonoBehaviour
 {
-    public float typingSpeed = 0.05f;           // Speed of typing effect
-    public AudioClip[] typingSounds;            // Array of sound effects for typing
-    public float delayBeforeDeactivation = 2f;  // Time to wait before deactivating the object
+    public float typingSpeed = 0.05f;
+    public AudioClip[] typingSounds;
+    public float delayBeforeDeactivation = 2f;
 
     private TextMeshProUGUI textMeshPro;
     private AudioSource audioSource;
     private string fullText;
+    private Coroutine typingCoroutine;
 
-    void Start()
+    void Awake()
     {
         textMeshPro = GetComponent<TextMeshProUGUI>();
         audioSource = GetComponent<AudioSource>();
@@ -21,10 +22,25 @@ public class TypingEffect : MonoBehaviour
         {
             audioSource = gameObject.AddComponent<AudioSource>();
         }
-
+        if (audioSource != null)
+            audioSource.volume = 0.5f;
         fullText = textMeshPro.text;
+    }
+
+    void OnEnable()
+    {
         textMeshPro.text = "";
-        StartCoroutine(TypeText());
+        typingCoroutine = StartCoroutine(TypeText());
+    }
+
+    void OnDisable()
+    {
+        if (typingCoroutine != null)
+        {
+            StopCoroutine(typingCoroutine);
+        }
+
+        textMeshPro.text = "";
     }
 
     private IEnumerator TypeText()
@@ -35,7 +51,6 @@ public class TypingEffect : MonoBehaviour
 
             if (typingSounds.Length > 0)
             {
-                // Play a random typing sound
                 AudioClip randomSound = typingSounds[Random.Range(0, typingSounds.Length)];
                 audioSource.PlayOneShot(randomSound);
             }
@@ -43,8 +58,8 @@ public class TypingEffect : MonoBehaviour
             yield return new WaitForSeconds(typingSpeed);
         }
 
-        // Wait for a few seconds before deactivating the object
         yield return new WaitForSeconds(delayBeforeDeactivation);
+
         gameObject.SetActive(false);
     }
 }

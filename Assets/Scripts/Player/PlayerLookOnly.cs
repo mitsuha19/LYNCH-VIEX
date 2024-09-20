@@ -13,12 +13,10 @@ public class PlayerLookOnly : MonoBehaviour
     private float rotationX = 0;
 
     private Camera playerCamera;
-    private CharacterController characterController;
 
     private void Awake()
     {
         playerCamera = GetComponentInChildren<Camera>();
-        characterController = GetComponentInChildren<CharacterController>();
     }
 
     private void Update()

@@ -8,11 +8,14 @@ public class Key : MonoBehaviour, IInteractable
     private MeshCollider MeshCollider;
     private MeshRenderer Mesh;
     public GameObject keyPickedUpText;
+    public GameObject glowing;
+    public GameObject monolouge;
 
     private AudioSource audioSource;
 
     void Start()
     {
+        monolouge.SetActive(false);
         audioSource = GetComponent<AudioSource>();
         MeshCollider = GetComponent<MeshCollider>();
         Mesh = GetComponent<MeshRenderer>();
@@ -23,6 +26,8 @@ public class Key : MonoBehaviour, IInteractable
     public void Interact()
     {
         PickupKey();
+        glowing.SetActive(false);
+        monolouge.SetActive(true);
     }
 
     private void PickupKey()

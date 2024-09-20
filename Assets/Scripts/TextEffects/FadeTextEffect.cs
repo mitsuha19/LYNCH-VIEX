@@ -5,9 +5,9 @@ using UnityEngine.UI;
 
 public class FadeTextEffect : MonoBehaviour
 {
-    public float fadeDuration = 1f;       // Duration for the fade-in and fade-out
-    public float displayDuration = 2f;    // Time to display the text before fading out
-    public AudioClip notificationSound;   // Sound effect for notifications
+    public float fadeDuration = 1f;      
+    public float displayDuration = 2f;    
+    public AudioClip notificationSound;   
 
     private TextMeshProUGUI textMeshPro;
     private AudioSource audioSource;
@@ -21,6 +21,8 @@ public class FadeTextEffect : MonoBehaviour
         {
             audioSource = gameObject.AddComponent<AudioSource>();
         }
+        if(audioSource != null)
+            audioSource.volume = 0.3f;
 
         if (notificationSound != null)
         {

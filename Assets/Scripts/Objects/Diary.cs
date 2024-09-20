@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public static class DiaryTutorial
 {
@@ -21,20 +22,28 @@ public class Diary : MonoBehaviour, IInteractable
     public GameObject tutorialText;
     public MeshRenderer diaryMesh;
     public MeshCollider diaryMeshCollider;
+    public GameObject glowing;
 
-    private bool isInInventory = false; // Tracks if the diary is in the player's inventory
-    private bool isDiaryVisible = false; // Tracks the current visibility of the diary
+    public GameObject mono1;  
+    public GameObject mono2; 
+
+    private bool monoDone = false; 
+
+    private bool isInInventory = false;  
+    private bool isDiaryVisible = false;
 
     void Start()
     {
         diaryUIObject.SetActive(false);
         audioSource = gameObject.AddComponent<AudioSource>();
 
-        // If the tutorial has already been shown, ensure the tutorial text is inactive from the start
         if (DiaryTutorial.tutorialShown)
         {
             tutorialText.SetActive(false);
         }
+
+        mono1.SetActive(false);
+        mono2.SetActive(false);
     }
 
     void Update()
@@ -56,13 +65,18 @@ public class Diary : MonoBehaviour, IInteractable
     {
         diaryMesh.enabled = false;
         diaryMeshCollider.enabled = false;
+        glowing.SetActive(false);
+
+        if (!monoDone)
+        {
+            StartCoroutine(PlayMonologues());
+        }
+
         if (!isInInventory)
         {
-            // First interaction: add the diary to the inventory
             isInInventory = true;
             ShowDiaryUI();
 
-            // Show the tutorial text if it hasn't been shown yet
             if (!DiaryTutorial.tutorialShown)
             {
                 tutorialText.SetActive(true);
@@ -80,6 +94,20 @@ public class Diary : MonoBehaviour, IInteractable
                 ShowDiaryUI();
             }
         }
+    }
+
+    private IEnumerator PlayMonologues()
+    {
+        mono1.SetActive(true);
+        yield return new WaitForSeconds(5f);  
+
+        mono1.SetActive(false);
+        mono2.SetActive(true);
+        yield return new WaitForSeconds(5f);  
+
+        mono2.SetActive(false);
+
+        monoDone = true;
     }
 
     public void ShowDiaryUI()
@@ -109,5 +137,3 @@ public class Diary : MonoBehaviour, IInteractable
         audioSource.PlayOneShot(exitSound);
     }
 }
-
-

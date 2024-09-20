@@ -9,6 +9,9 @@ TagManager:
   - WardrobeDoor
   - Closet
   - DoorFrame
+  - Ladder
+  - EndDoor
+  - BlockedDoor
   layers:
   - Default
   - TransparentFX

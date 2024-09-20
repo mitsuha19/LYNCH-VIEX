@@ -317,7 +317,6 @@ public class FirstPersonController : MonoBehaviour
         duringCrouchAnimation = true;
         canSprint = false;
 
-        // Force standing if exiting a hiding place
         bool forceStand = isExitingHidingPlace && isCrouching;
         if (forceStand)
         {

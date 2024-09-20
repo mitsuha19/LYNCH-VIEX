@@ -17,7 +17,8 @@ public class Interactor : MonoBehaviour
     private Door currentDoor;
     private Diary currentDiary;
     private Key currentKey;
-
+    private Notebook currentNotebook;
+    private Fridge currentFridge;
     void Start()
     {
         GameObject player = GameObject.FindWithTag("Player");
@@ -59,8 +60,18 @@ public class Interactor : MonoBehaviour
                     currentDoor = null;
                 }
                 currentDoor = door;
-                currentDoor.ShowDoorText();  
+                currentDoor.ShowDoorText();
             }
+        }
+        else if (IsAimingAtNotebook(out Notebook notebook))
+        {
+            currentNotebook = notebook;
+            ShowNotebookText(notebook);
+        }
+        else if (IsAimingAtFridge(out Fridge fridge))
+        {
+            currentFridge = fridge;
+            ShowFridgeText(fridge);
         }
         else
         {
@@ -73,12 +84,16 @@ public class Interactor : MonoBehaviour
             currentKey = null;
             HideDoorText();
             currentDoor = null;
+            HideNotebookText();
+            currentNotebook = null;
+            HideFridgeText();
+            currentFridge = null;
         }
     }
 
     private void InteractWithTarget()
     {
-        if (heldObject == null && currentNote == null && currentDoor == null && currentKey == null)
+        if (heldObject == null && currentNote == null && currentDoor == null && currentKey == null && currentNotebook == null && currentFridge == null)
         {
             Interact();
         }
@@ -92,11 +107,19 @@ public class Interactor : MonoBehaviour
         }
         else if (currentDoor != null)
         {
-            currentDoor.Interact();  
+            currentDoor.Interact();
         }
         else if (currentKey != null)
         {
             currentKey.Interact();
+        }
+        else if (currentNotebook != null)
+        {
+            currentNotebook.Interact();
+        }
+        else if (currentFridge != null)
+        {
+            currentFridge.Interact();
         }
     }
 
@@ -124,6 +147,16 @@ public class Interactor : MonoBehaviour
                 {
                     currentDoor = door;
                     door.Interact();
+                }
+                else if (interactObj is Notebook notebook)
+                {
+                    currentNotebook = notebook;
+                    notebook.Interact();
+                }
+                else if (interactObj is Fridge fridge)
+                {
+                    currentFridge = fridge;
+                    fridge.Interact();
                 }
             }
         }
@@ -196,6 +229,30 @@ public class Interactor : MonoBehaviour
         key = null;
         return false;
     }
+
+    private bool IsAimingAtNotebook(out Notebook notebook)
+    {
+        Ray r = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
+
+        if (Physics.Raycast(r, out RaycastHit hitInfo, InteractRange))
+        {
+            return hitInfo.collider.gameObject.TryGetComponent(out notebook);
+        }
+        notebook = null;
+        return false;
+    }
+
+    private bool IsAimingAtFridge(out Fridge fridge)
+    {
+        Ray r = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
+
+        if (Physics.Raycast(r, out RaycastHit hitInfo, InteractRange))
+        {
+            return hitInfo.collider.gameObject.TryGetComponent(out fridge);
+        }
+        fridge = null;
+        return false;
+    }
     #endregion
 
     #region interactTexts
@@ -265,14 +322,6 @@ public class Interactor : MonoBehaviour
         door.doorText.SetActive(true);
     }
 
-    private void HideLockedText()
-    {
-        if (currentDoor != null)
-        {
-            currentDoor.lockedText.SetActive(false);
-        }
-    }
-
     private void HideDoorText()
     {
         if (currentDoor != null)
@@ -280,6 +329,31 @@ public class Interactor : MonoBehaviour
             currentDoor.doorText.SetActive(false);
         }
     }
-    #endregion
 
+    private void ShowNotebookText (Notebook notebook)
+    {
+        notebook.readText.SetActive(true);
+    }
+
+    private void HideNotebookText()
+    {
+        if(currentNotebook != null)
+        {
+            currentNotebook.readText.SetActive(false);
+        }
+    }
+
+    private void ShowFridgeText(Fridge fridge)
+    {
+        fridge.interactText.SetActive(true);
+    }
+
+    private void HideFridgeText()
+    {
+        if (currentFridge != null)
+        {
+            currentFridge.interactText.SetActive(false);
+        }
+    }
+    #endregion
 }

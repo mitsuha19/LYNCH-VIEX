@@ -10,7 +10,7 @@ public class Note : MonoBehaviour, IInteractable
     public AudioClip readSound; 
     public AudioClip exitSound;
     private AudioSource audioSource; 
-    private FirstPersonController playerController; 
+    public FirstPersonController playerController; 
 
     void Start()
     {
@@ -19,7 +19,6 @@ public class Note : MonoBehaviour, IInteractable
         closeButton.onClick.AddListener(HideNoteUI);
         
         GameObject player = GameObject.FindWithTag("Player");
-        playerController = player.GetComponent<FirstPersonController>();
 
         audioSource = gameObject.AddComponent<AudioSource>();
     }

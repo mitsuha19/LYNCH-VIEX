@@ -1,6 +1,16 @@
 using UnityEngine;
 using System.Collections;
 
+public static class LighterTutorial
+{
+    public static bool tutorialShown = false;
+
+    public static void MarkTutorialAsShown()
+    {
+        tutorialShown = true;
+    }
+}
+
 public class Lighter : MonoBehaviour, IInteractable
 {
     private bool isHeld = false;
@@ -14,6 +24,8 @@ public class Lighter : MonoBehaviour, IInteractable
     private Transform putAwayPosition;
     private GameObject lighterEffects;
     public GameObject Glowing;
+
+    public GameObject tutorialText;
 
     [SerializeField] private AudioSource lighterAudioSource = default;
     [SerializeField] private AudioClip openClip;
@@ -29,6 +41,11 @@ public class Lighter : MonoBehaviour, IInteractable
         if (lighterEffects != null)
         {
             lighterEffects.SetActive(false);
+        }
+
+        if (LighterTutorial.tutorialShown)
+        {
+            tutorialText.SetActive(false);
         }
     }
 
@@ -64,6 +81,12 @@ public class Lighter : MonoBehaviour, IInteractable
 
     public void Interact()
     {
+        if (!LighterTutorial.tutorialShown)
+        {
+            tutorialText.SetActive(true);
+            LighterTutorial.MarkTutorialAsShown();
+        }
+
         if (isHeld)
         {
             Drop(false);

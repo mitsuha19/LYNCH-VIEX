@@ -17,14 +17,12 @@ public class HidingPlace : MonoBehaviour
     public float loseDistance;
     public GameObject tutorialText;
 
-    public AudioSource audioSource;   // AudioSource component for playing sounds
-    public AudioClip closetHideClip;  // AudioClip for the ClosetHide sound
+    public AudioSource audioSource;   
+    public AudioClip closetHideClip;  
 
     private bool hiding, playerInTrigger;
     private const string WardrobeDoorTag = "WardrobeDoor";
-    private const string ClosetTag = "Closet";
 
-    // Static variable to keep track of the current active hiding place
     private static HidingPlace activeHidingPlace;
 
     void Start()
@@ -49,7 +47,6 @@ public class HidingPlace : MonoBehaviour
             playerInTrigger = false;
             hideText.SetActive(false);
 
-            // Clear the active hiding place if the player exits the trigger
             if (activeHidingPlace == this)
             {
                 activeHidingPlace = null;
@@ -67,11 +64,11 @@ public class HidingPlace : MonoBehaviour
                 hidingPlayer.SetActive(false);
                 hiding = false;
 
-                // If the player was crouched before hiding, force them to stand
+
                 FirstPersonController playerController = normalPlayer.GetComponent<FirstPersonController>();
                 playerController.isExitingHidingPlace = true;
 
-                if (CompareTag(ClosetTag) && closetHideClip != null)
+                if (closetHideClip != null)
                 {
                     audioSource.PlayOneShot(closetHideClip);
                 }
@@ -79,13 +76,11 @@ public class HidingPlace : MonoBehaviour
             return;
         }
 
-        // Only handle the hideText UI if this hiding place is the active one
         if (playerInTrigger && IsAimingAtWardrobeDoor(out _))
         {
-            // If there is no active hiding place or the active hiding place is this one, display the hideText
             if (activeHidingPlace == null || activeHidingPlace == this)
             {
-                activeHidingPlace = this; // Set this as the active hiding place
+                activeHidingPlace = this; 
                 hideText.SetActive(true);
 
                 if (Input.GetKeyDown(KeyCode.E))
@@ -102,15 +97,13 @@ public class HidingPlace : MonoBehaviour
                     hiding = true;
                     normalPlayer.SetActive(false);
 
-                    // Show the tutorial text only the first time the player hides
                     if (!TutorialManager.tutorialShown)
                     {
-                        tutorialText.SetActive(true); // Activate the tutorial text
-                        TutorialManager.tutorialShown = true; // Set the flag to prevent showing it again
+                        tutorialText.SetActive(true); 
+                        TutorialManager.tutorialShown = true; 
                     }
 
-                    // Play the "ClosetHide" sound if the hiding place is tagged as "Closet"
-                    if (CompareTag(ClosetTag) && closetHideClip != null)
+                    if (closetHideClip != null)
                     {
                         audioSource.PlayOneShot(closetHideClip);
                     }
