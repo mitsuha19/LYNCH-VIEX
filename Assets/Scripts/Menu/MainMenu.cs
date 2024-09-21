@@ -3,13 +3,17 @@ using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
+    public SceneTransition sceneTransition;
+    public string sceneName = "Game";
+
     public void PlayGame()
     {
-        SceneManager.LoadScene("Game");
+        sceneTransition.FadeToScene(sceneName);    
+         
     }
 
     public void LoadGame()
-    {
+    { 
 
     }
 
